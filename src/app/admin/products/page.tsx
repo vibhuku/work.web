@@ -34,7 +34,7 @@ export default function AdminProductsPage() {
 
   // Form fields
   const [formName, setFormName] = useState('');
-  const [formCategory, setFormCategory] = useState<'Men' | 'Women' | 'Kids' | 'Accessories'>('Men');
+  const [formCategory, setFormCategory] = useState<Product['category']>('Men');
   const [formPrice, setFormPrice] = useState<number | ''>(1999);
   const [formTag, setFormTag] = useState('New Arrival');
   const [formDesc, setFormDesc] = useState('');
@@ -311,6 +311,7 @@ export default function AdminProductsPage() {
                       <option value="Men">Men</option>
                       <option value="Women">Women</option>
                       <option value="Kids">Kids</option>
+                      <option value="Footwear">Footwear</option>
                       <option value="Accessories">Accessories</option>
                     </select>
                   </div>

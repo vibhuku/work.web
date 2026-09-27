@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/store';
 import { Navbar } from '@/components/layout/Navbar';
@@ -8,8 +8,8 @@ import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { TIER_CONFIG } from '@/lib/tiers';
 import { formatCurrency } from '@/lib/utils';
+import { Product } from '@/lib/types';
 import {
   Sparkles,
   ShoppingBag,
@@ -22,159 +22,412 @@ import {
   Crown,
   Receipt,
   HelpCircle,
-  ExternalLink,
   MapPin,
-  ChevronDown
+  X,
+  CreditCard,
+  User,
+  Clock,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Calendar,
+  Check,
+  Layers,
+  ChevronRight
 } from 'lucide-react';
 
 export default function LandingPage() {
   const { state, calculatePoints } = useApp();
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  const faqs = [
+  // Active customer for preview
+  const activeCustomer =
+    state.customers.find(c => c.id === state.currentCustomerId) ||
+    state.customers[0];
+
+  const categories = [
     {
-      q: 'How do I earn Westside Loyalty points?',
-      a: `Simply visit any of our physical Westside retail stores across India. While paying for your clothes at the billing counter, share your registered mobile number with our store staff. For every ₹${state.pointsRule.amountPerPoint} spent on your bill, 1 point is automatically credited to your loyalty balance.`,
+      name: 'Men',
+      tagline: 'Everyday essentials, elevated.',
+      image: 'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=800&q=80',
+      count: '8 Collections',
+      categoryKey: 'Men',
     },
     {
-      q: 'Is there any password or OTP required?',
-      a: 'No! Westside Loyalty is designed for frictionless store checkout. You only need your 10-digit mobile number. There are no passwords to remember and no OTP delays while standing in the billing queue.',
+      name: 'Women',
+      tagline: 'Contemporary styles for every moment.',
+      image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80',
+      count: '12 Collections',
+      categoryKey: 'Women',
     },
     {
-      q: 'Can I purchase clothes directly on this website?',
-      a: 'No. This website is a retail loyalty and store catalogue platform, not an e-commerce website. The clothing collections shown here are for in-store browsing. All trials, styling, purchases, and reward redemptions happen at physical Westside store counters.',
+      name: 'Kids',
+      tagline: 'Playful styles for little personalities.',
+      image: 'https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?auto=format&fit=crop&w=800&q=80',
+      count: '6 Collections',
+      categoryKey: 'Kids',
     },
     {
-      q: 'How do I redeem my accumulated loyalty points?',
-      a: 'You can browse available vouchers in your Rewards Catalogue. Once you select a reward, points are deducted and an in-store voucher code is generated. Present this voucher to store staff at checkout to claim your shopping discount.',
+      name: 'Footwear',
+      tagline: 'Complete your look with timeless comfort.',
+      image: 'https://images.unsplash.com/photo-1560769629-975ec94e6a86?auto=format&fit=crop&w=800&q=80',
+      count: '5 Collections',
+      categoryKey: 'Footwear',
     },
     {
-      q: 'How do membership tiers work?',
-      a: 'We have 4 prestigious tiers: Bronze (0–999 pts), Silver (1,000–4,999 pts), Gold (5,000–14,999 pts), and Platinum (15,000+ pts). As your lifetime points grow from store purchases, you automatically unlock higher points multipliers, birthday discounts, free alterations, and VIP preview access.',
+      name: 'Accessories',
+      tagline: 'Finishing touches with modern distinction.',
+      image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80',
+      count: '6 Collections',
+      categoryKey: 'Accessories',
+    },
+  ];
+
+  // Specific showcase products
+  const showcaseProducts = [
+    {
+      id: 'SHOW-1',
+      name: 'Oversized Cotton Shirt',
+      category: 'Men',
+      price: 1999,
+      points: 8,
+      image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+      tag: 'New Season',
+      description: 'Crafted from pure lightweight cotton with a contemporary relaxed fit. Ideal for effortless layering.',
+    },
+    {
+      id: 'SHOW-2',
+      name: 'Relaxed Fit Denim',
+      category: 'Men',
+      price: 2499,
+      points: 10,
+      image: 'https://images.unsplash.com/photo-1542272604-780c96856592?auto=format&fit=crop&w=800&q=80',
+      tag: 'Bestseller',
+      description: 'Classic straight-leg denim with subtle stretch for all-day comfort and a clean, structured finish.',
+    },
+    {
+      id: 'SHOW-3',
+      name: 'Classic Polo T-Shirt',
+      category: 'Men',
+      price: 1499,
+      points: 6,
+      image: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?auto=format&fit=crop&w=800&q=80',
+      tag: 'Essential',
+      description: 'Finely spun mercerized cotton polo with ribbed collar and tailored sleeves. An in-store wardrobe anchor.',
+    },
+    {
+      id: 'SHOW-4',
+      name: 'Women’s Relaxed Dress',
+      category: 'Women',
+      price: 2999,
+      points: 12,
+      image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80',
+      tag: 'Trending',
+      description: 'Fluid floral printed midi dress designed with breathable fabric and flattering silhouette.',
+    },
+    {
+      id: 'SHOW-5',
+      name: 'Lightweight Jacket',
+      category: 'Women',
+      price: 3499,
+      points: 14,
+      image: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=80',
+      tag: 'Must Have',
+      description: 'Modern cropped utility jacket crafted from sturdy cotton twill with premium horn buttons.',
+    },
+    {
+      id: 'SHOW-6',
+      name: 'Straight Fit Trousers',
+      category: 'Women',
+      price: 2199,
+      points: 9,
+      image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80',
+      tag: 'New Arrival',
+      description: 'High-waisted tailored trousers in fluid drape crepe fabric. Features discreet slant pockets and clean hems.',
+    },
+  ];
+
+  // 4 Simplified Membership Tiers requested
+  const membershipTiers = [
+    {
+      name: 'BRONZE',
+      range: '0–199 Points',
+      benefit: 'Welcome Rewards',
+      multiplier: '1x Points',
+      color: 'border-amber-700/30 bg-gradient-to-b from-amber-50/50 to-white text-stone-900',
+      badge: 'bg-amber-100 text-amber-900 border-amber-200',
+      perks: [
+        'Welcome rewards on joining',
+        'Basic promotional offers',
+        'Birthday greetings & gift points',
+        'Physical store event notifications',
+      ],
+      progress: 'Entry Level',
+    },
+    {
+      name: 'SILVER',
+      range: '200–499 Points',
+      benefit: 'Exclusive Offers',
+      multiplier: '1.25x Points',
+      color: 'border-slate-300 bg-gradient-to-b from-slate-50 to-white text-stone-900 shadow-sm',
+      badge: 'bg-slate-200 text-slate-800 border-slate-300',
+      perks: [
+        'Exclusive seasonal discount vouchers',
+        'Birthday 15% special savings',
+        'Early access to seasonal sales',
+        'Complimentary gift packaging in store',
+      ],
+      progress: 'Active Status (Rahul)',
+    },
+    {
+      name: 'GOLD',
+      range: '500–799 Points',
+      benefit: 'Higher Rewards',
+      multiplier: '1.5x Points',
+      color: 'border-amber-400/60 bg-gradient-to-b from-amber-500/5 to-white text-stone-900 shadow-sm',
+      badge: 'bg-amber-100 text-amber-900 border-amber-300',
+      perks: [
+        'Higher points multiplier on all bills',
+        'Free in-store alterations on trousers & shirts',
+        'Priority checkout during weekend rushes',
+        'Invitations to preview private collections',
+      ],
+      progress: 'Unlock at 500 Pts',
+    },
+    {
+      name: 'PLATINUM',
+      range: '800–1,000+ Points',
+      benefit: 'Premium Benefits',
+      multiplier: '2.0x Points',
+      color: 'border-stone-800 bg-[#0D0D0D] text-white shadow-xl',
+      badge: 'bg-emerald-950 text-emerald-300 border-emerald-800',
+      perks: [
+        'VIP access to luxury fashion launches',
+        'Complimentary 1-on-1 personal styling',
+        'Free home delivery of tailored garments',
+        'Annual anniversary luxury gift voucher',
+      ],
+      progress: 'VIP Privileges',
+    },
+  ];
+
+  // Curated Rewards
+  const curatedRewards = [
+    {
+      title: '₹100 Shopping Reward',
+      points: 100,
+      value: '₹100 Instant Discount',
+      desc: 'Applied directly at the billing counter on bills of ₹1,000 or more.',
+      icon: '🛍️',
+      category: 'Store Voucher',
+    },
+    {
+      title: '₹250 Shopping Reward',
+      points: 250,
+      value: '₹250 Instant Discount',
+      desc: 'Immediate cash deduction at store checkout on purchases above ₹2,500.',
+      icon: '🏷️',
+      category: 'Store Voucher',
+    },
+    {
+      title: '10% OFF Entire Bill',
+      points: 300,
+      value: 'Flat 10% Off',
+      desc: 'Exclusive storewide 10% bill waiver. Valid across all apparel racks.',
+      icon: '✨',
+      category: 'Percentage Off',
+    },
+    {
+      title: 'Birthday Special Reward',
+      points: 200,
+      value: '15% Birthday Treat',
+      desc: 'Celebrate your special month with a 15% discount voucher on your total bill.',
+      icon: '🎂',
+      category: 'Annual Special',
+    },
+    {
+      title: 'Exclusive Member Offer',
+      points: 500,
+      value: '20% Premium Offer',
+      desc: 'Unlock 20% savings on high-end jackets, silks, and formal tailored suits.',
+      icon: '💎',
+      category: 'VIP Privilege',
     },
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8F7F4] flex flex-col justify-between">
+    <div className="min-h-screen bg-[#F8F7F4] flex flex-col justify-between selection:bg-emerald-100 selection:text-emerald-900 font-sans">
       <Navbar />
 
-      <main className="flex-1 space-y-20 sm:space-y-28 pb-16">
+      <main className="flex-1 space-y-24 sm:space-y-32 pb-24">
         {/* ============================================================ */}
-        {/* HERO SECTION */}
+        {/* 1. HERO SECTION: FASHION CLOTHING EDITORIAL & INTEGRATED CARD */}
         {/* ============================================================ */}
-        <section className="relative overflow-hidden pt-12 sm:pt-16 lg:pt-20">
+        <section className="relative pt-6 sm:pt-12 lg:pt-16 overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              {/* Left Column: Editorial Headline & CTAs */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+              {/* Left Column: Bold Editorial Headline */}
               <div className="lg:col-span-6 space-y-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-semibold">
-                  <Sparkles className="w-3.5 h-3.5 text-[#159028]" />
-                  <span>Physical Store Loyalty Redefined</span>
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-stone-200/90 text-stone-800 text-xs font-bold shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-[#159028]"></span>
+                  <span className="uppercase tracking-widest text-[11px] text-[#159028]">Physical Retail Loyalty</span>
+                  <span className="text-stone-300">•</span>
+                  <span className="text-stone-500 font-normal">120+ Stores In India</span>
                 </div>
 
-                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-stone-900 tracking-tight font-serif leading-[1.08]">
-                  Earn. <br />
-                  Elevate. <br />
-                  <span className="text-[#159028] italic">Enjoy.</span>
-                </h1>
+                <div className="space-y-1">
+                  <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-[#0D0D0D] tracking-tight font-serif leading-[1.02]">
+                    Earn. <br />
+                    Elevate. <br />
+                    <span className="text-[#159028] italic font-serif font-normal">Enjoy.</span>
+                  </h1>
+                </div>
 
-                <p className="text-base sm:text-lg text-stone-600 leading-relaxed max-w-lg">
-                  Shop in-store. Earn loyalty points. Unlock exclusive rewards. Experience fashion privileges tailored for every visit to your neighborhood Westside store.
+                <p className="text-base sm:text-lg text-stone-600 leading-relaxed max-w-lg font-normal">
+                  Shop in-store. Earn points. Unlock exclusive rewards. Experience fashion privileges tailored for every visit to your neighborhood Westside store.
                 </p>
 
-                {/* Conversion Strip */}
-                <div className="p-3.5 rounded-xl bg-white border border-stone-200 text-xs flex items-center justify-between font-medium max-w-md shadow-sm">
-                  <span className="text-stone-500">Loyalty Conversion Rule:</span>
-                  <span className="font-bold text-[#159028]">
-                    ₹{state.pointsRule.amountPerPoint} Spent In Store = 1 Point
+                {/* Conversion Pill Strip */}
+                <div className="p-4 rounded-2xl bg-white border border-stone-200/90 text-xs flex items-center justify-between font-medium max-w-md shadow-xs">
+                  <div className="flex items-center gap-2 text-stone-600">
+                    <Store className="w-4 h-4 text-[#159028]" />
+                    <span>Store Billing Conversion:</span>
+                  </div>
+                  <span className="font-bold text-[#159028] font-mono text-sm bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-100">
+                    ₹{state.pointsRule.amountPerPoint} Spent = 1 Point
                   </span>
                 </div>
 
                 {/* CTAs */}
                 <div className="flex flex-wrap items-center gap-3 pt-2">
-                  <Link href="/join">
-                    <Button size="lg" className="bg-[#159028] hover:bg-emerald-700 text-white font-bold text-sm px-7 h-12 rounded-xl shadow-lg gap-2">
-                      <Sparkles className="w-4 h-4" />
-                      Join Loyalty Free
-                    </Button>
-                  </Link>
-
                   <Link href="/catalog">
-                    <Button size="lg" variant="outline" className="border-stone-300 font-semibold text-sm px-6 h-12 rounded-xl hover:bg-white">
-                      Explore Store Collection
+                    <Button size="lg" className="bg-[#0D0D0D] hover:bg-stone-800 text-white font-bold text-xs uppercase tracking-wider px-8 h-12 rounded-xl shadow-md gap-2">
+                      Explore Collections
+                      <ArrowRight className="w-4 h-4" />
                     </Button>
                   </Link>
 
-                  <Link href="/admin/purchases">
-                    <Button size="lg" variant="ghost" className="text-xs text-stone-600 hover:text-stone-900 gap-1.5">
+                  <Link href="/customer/rewards">
+                    <Button size="lg" variant="outline" className="border-stone-300 bg-white font-bold text-xs uppercase tracking-wider px-7 h-12 rounded-xl hover:bg-stone-50 text-stone-800">
+                      View Rewards
+                    </Button>
+                  </Link>
+
+                  <Link href="/admin/purchases" className="hidden sm:inline-block">
+                    <Button size="lg" variant="ghost" className="text-xs text-stone-500 hover:text-stone-900 gap-1.5 h-12">
                       <Receipt className="w-3.5 h-3.5 text-[#159028]" />
-                      Store Staff POS Terminal →
+                      Store Staff POS →
                     </Button>
                   </Link>
                 </div>
 
-                <div className="flex items-center gap-6 pt-4 text-xs text-stone-500 border-t border-stone-200/80">
+                {/* Trust Badges */}
+                <div className="flex items-center gap-6 pt-3 text-xs text-stone-500 border-t border-stone-200/80">
                   <div className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-[#159028]" />
                     <span>No Password Required</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-[#159028]" />
-                    <span>Instant Mobile ID</span>
+                    <span>Mobile Number ID</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-[#159028]" />
-                    <span>120+ Retail Stores</span>
+                    <span>Physical In-Store Perks</span>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column: Editorial Visual Showcase */}
-              <div className="lg:col-span-6">
-                <div className="relative mx-auto max-w-md lg:max-w-none">
-                  {/* Decorative backdrop */}
-                  <div className="absolute -inset-4 bg-gradient-to-tr from-[#159028]/20 to-amber-100/50 rounded-3xl filter blur-2xl opacity-70"></div>
-
-                  {/* Main Fashion Editorial Card */}
-                  <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-stone-200 bg-white">
-                    <div className="aspect-[4/5] relative">
+              {/* Right Column: Fashion Clothing Editorial Composition + Floating Loyalty Card */}
+              <div className="lg:col-span-6 relative">
+                <div className="relative mx-auto max-w-lg lg:max-w-none">
+                  {/* Fashion Multi-Image Editorial Layout */}
+                  <div className="grid grid-cols-12 gap-3 items-center">
+                    {/* Primary Editorial Image: Men Linen & Blazer */}
+                    <div className="col-span-7 aspect-[3/4] rounded-3xl overflow-hidden shadow-xl border border-stone-200/80 bg-stone-100 group relative">
                       <img
-                        src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80"
-                        alt="Westside Fashion Editorial"
-                        className="w-full h-full object-cover object-top"
+                        src="https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=1000&q=80"
+                        alt="Westside Men Apparel Lookbook"
+                        className="w-full h-full object-cover object-top group-hover:scale-103 transition-transform duration-700"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                      <div className="absolute bottom-4 left-4 right-4 text-white">
+                        <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-300">AUTUMN / WINTER</span>
+                        <div className="text-sm font-bold font-serif">Tailored Shirts & Casual Overshirts</div>
+                      </div>
+                    </div>
 
-                      {/* Floating Loyalty Card Overlay */}
-                      <div className="absolute bottom-6 left-6 right-6 p-5 rounded-2xl bg-white/95 backdrop-blur-md shadow-xl border border-white/40 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-[10px] uppercase font-bold tracking-wider text-[#159028]">
-                              LIVE STORE PURCHASE DEMO
-                            </span>
-                            <div className="text-sm font-bold text-stone-900 mt-0.5">
-                              Phoenix Palladium, Mumbai
-                            </div>
-                          </div>
-                          <Badge variant="gold" className="text-[10px]">
-                            Gold Member
-                          </Badge>
+                    {/* Secondary Stack: Women Dress & Trending Garment */}
+                    <div className="col-span-5 space-y-3">
+                      <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-lg border border-stone-200/80 bg-stone-100 group relative">
+                        <img
+                          src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"
+                          alt="Westside Women Dress Lookbook"
+                          className="w-full h-full object-cover object-top group-hover:scale-103 transition-transform duration-700"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                        <div className="absolute bottom-3 left-3 text-white">
+                          <span className="text-[9px] uppercase font-bold tracking-wider text-emerald-300">WOMEN</span>
+                          <div className="text-xs font-bold font-serif leading-tight">Relaxed Dresses</div>
                         </div>
+                      </div>
 
-                        <div className="bg-stone-50 p-3 rounded-xl border border-stone-100 flex items-center justify-between text-xs">
-                          <div>
-                            <span className="text-stone-400 block text-[10px]">Bill Amount</span>
-                            <span className="font-bold text-stone-900 font-serif text-sm">₹5,000</span>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-stone-400 block text-[10px]">Points Earned</span>
-                            <span className="font-black text-[#159028] text-sm">+20 Points</span>
-                          </div>
+                      <div className="aspect-[4/3] rounded-3xl overflow-hidden shadow-md border border-stone-200/80 bg-stone-100 group relative">
+                        <img
+                          src="https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80"
+                          alt="Westside Contemporary Trousers"
+                          className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-700"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                        <div className="absolute bottom-2.5 left-3 text-white">
+                          <span className="text-[9px] uppercase font-bold tracking-wider text-emerald-300">IN-STORE RACKS</span>
+                          <div className="text-xs font-bold font-serif leading-tight">Wide Leg Trousers</div>
                         </div>
+                      </div>
+                    </div>
+                  </div>
 
-                        <div className="flex items-center justify-between text-[11px] text-stone-500 pt-1">
-                          <span>Identified: Rahul Kumar (+91 98...10)</span>
-                          <span className="font-bold text-stone-900">Balance: 3,580 pts</span>
+                  {/* Sleek Floating Loyalty Card Visually Integrated Into Hero */}
+                  <div className="absolute -bottom-6 -left-4 sm:left-4 right-4 sm:right-auto sm:w-[360px] p-5 rounded-2xl bg-white/95 backdrop-blur-md shadow-2xl border border-stone-200/90 space-y-3 z-20">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-[#0D0D0D] text-white flex items-center justify-center font-bold text-xs">
+                          W
                         </div>
+                        <div>
+                          <div className="text-xs font-bold text-stone-900 leading-tight">Rahul Kumar</div>
+                          <div className="text-[10px] text-stone-400 font-mono">+91 98765 43210</div>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-bold text-[#159028] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                        Silver Member
+                      </span>
+                    </div>
+
+                    <div className="bg-[#F8F7F4] p-3 rounded-xl border border-stone-200/80 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-stone-400 block tracking-wider">
+                          LOYALTY BALANCE
+                        </span>
+                        <div className="text-2xl font-black text-stone-900 font-mono tracking-tight">
+                          3,580 <span className="text-xs font-medium text-stone-500 font-sans">Points</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-stone-400 block">Next Tier</span>
+                        <span className="text-xs font-bold text-amber-700">Gold (5,000 pts)</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex justify-between text-[11px] font-semibold text-stone-600">
+                        <span>Tier Progress</span>
+                        <span className="text-[#159028] font-bold">1,420 points to Gold</span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-stone-100 overflow-hidden">
+                        <div
+                          className="h-full bg-[#159028] rounded-full transition-all duration-1000"
+                          style={{ width: '71.6%' }}
+                        ></div>
                       </div>
                     </div>
                   </div>
@@ -185,34 +438,224 @@ export default function LandingPage() {
         </section>
 
         {/* ============================================================ */}
-        {/* HOW LOYALTY WORKS (4-STEP SECTION) */}
+        {/* 2. COLLECTIONS: "SHOP YOUR STYLE" (LARGE EDITORIAL CATEGORY CARDS) */}
         {/* ============================================================ */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto space-y-2 mb-12">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-widest text-[#159028]">
+                  IN-STORE CATEGORIES
+                </span>
+                <span className="text-stone-300">•</span>
+                <span className="text-xs text-stone-500">Available across all metro stores</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-[#0D0D0D] tracking-tight font-serif mt-1">
+                Shop Your Style
+              </h2>
+              <p className="text-xs sm:text-sm text-stone-500 mt-1 max-w-xl">
+                Explore our signature fashion departments. Preview the collections, try them on in-store, and earn points on every billing.
+              </p>
+            </div>
+
+            <Link href="/catalog">
+              <Button variant="outline" className="border-stone-300 bg-white text-xs font-bold uppercase tracking-wider px-5 h-11 rounded-xl hover:bg-stone-50 gap-1.5">
+                View Full Lookbook
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+            {categories.map(cat => (
+              <Link
+                key={cat.name}
+                href="/catalog"
+                className="group relative rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-stone-200/90 bg-white flex flex-col justify-between"
+              >
+                <div className="aspect-[3/4] relative overflow-hidden bg-stone-100">
+                  <img
+                    src={cat.image}
+                    alt={cat.name}
+                    className="w-full h-full object-cover object-center group-hover:scale-106 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+
+                  <div className="absolute top-3 left-3">
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-white/95 text-stone-900 px-2.5 py-1 rounded-full shadow-xs">
+                      {cat.count}
+                    </span>
+                  </div>
+
+                  <div className="absolute bottom-4 left-4 right-4 text-white space-y-1">
+                    <h3 className="text-xl font-bold font-serif tracking-wide">{cat.name}</h3>
+                    <p className="text-[11px] text-stone-200 line-clamp-2 leading-relaxed">
+                      "{cat.tagline}"
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-white border-t border-stone-100 flex items-center justify-between text-xs text-stone-700 font-semibold group-hover:text-[#159028] transition-colors">
+                  <span>Browse In Store</span>
+                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* 3. PRODUCT SHOWCASE: FASHION RETAIL GRID (NO CART / STORE ONLY) */}
+        {/* ============================================================ */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-[#159028]">
+                ON THE STORE RACKS
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-[#0D0D0D] tracking-tight font-serif mt-1">
+                Featured Clothing On Racks
+              </h2>
+              <p className="text-xs sm:text-sm text-stone-500 mt-1 max-w-xl">
+                Browse this week’s arrivals. Touch, feel, and try on at your local Westside store while earning loyalty points.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-stone-500 font-medium hidden sm:inline">
+                Rule: ₹250 Spent = 1 Point
+              </span>
+              <Link href="/catalog">
+                <Button variant="outline" className="border-stone-300 bg-white text-xs font-bold uppercase tracking-wider h-11 px-5 rounded-xl hover:bg-stone-50 gap-1.5">
+                  View 20+ Outfits
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {showcaseProducts.map(product => (
+              <div
+                key={product.id}
+                className="bg-white rounded-3xl border border-stone-200/90 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
+              >
+                <div>
+                  {/* Garment Image Container */}
+                  <div className="aspect-[4/5] relative overflow-hidden bg-stone-100">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-full object-cover object-top group-hover:scale-104 transition-transform duration-500"
+                    />
+
+                    {/* Tag badge */}
+                    <div className="absolute top-3 left-3">
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-white/95 text-stone-900 px-2.5 py-1 rounded-full shadow-xs">
+                        {product.tag}
+                      </span>
+                    </div>
+
+                    {/* Available in Store Pin */}
+                    <div className="absolute top-3 right-3">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-[#159028] text-white px-2.5 py-1 rounded-full shadow-md">
+                        <MapPin className="w-3 h-3" />
+                        Available In Store
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Product Details */}
+                  <div className="p-5 space-y-2">
+                    <div className="text-[10px] uppercase font-bold tracking-widest text-stone-400">
+                      {product.category}
+                    </div>
+
+                    <h3 className="text-base font-bold text-stone-900 font-serif group-hover:text-[#159028] transition-colors">
+                      {product.name}
+                    </h3>
+
+                    <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
+                      {product.description}
+                    </p>
+
+                    <div className="pt-2 flex items-baseline justify-between">
+                      <span className="text-lg font-black text-stone-900 font-serif">
+                        {formatCurrency(product.price)}
+                      </span>
+                      <span className="text-xs font-bold text-[#159028] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                        Earn {product.points} Points
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Action: Quick View for In-Store Information (No Cart / Checkout) */}
+                <div className="p-5 pt-0 border-t border-stone-100 mt-2 space-y-2">
+                  <div className="text-[11px] text-stone-400 flex items-center gap-1.5 pt-2">
+                    <span className="w-2 h-2 rounded-full bg-[#159028]"></span>
+                    <span>Ready for fitting in all retail branches</span>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      setSelectedProduct({
+                        id: product.id,
+                        name: product.name,
+                        category: product.category as any,
+                        price: product.price,
+                        tag: product.tag,
+                        description: product.description,
+                        image: product.image,
+                        inStore: true,
+                        colors: ['Original', 'Alternative'],
+                        sizes: ['S', 'M', 'L', 'XL'],
+                      })
+                    }
+                    variant="outline"
+                    className="w-full text-xs font-semibold h-10 border-stone-200 hover:bg-stone-50 rounded-xl"
+                  >
+                    View In-Store Details
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* 4. LOYALTY EXPLANATION: 4-STEP FLOW + PURCHASE CALCULATION CARD */}
+        {/* ============================================================ */}
+        <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
             <span className="text-xs font-bold uppercase tracking-widest text-[#159028]">
               EFFORTLESS RETAIL FLOW
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-stone-900 tracking-tight font-serif">
-              How Westside Loyalty Works
+            <h2 className="text-3xl sm:text-4xl font-black text-[#0D0D0D] tracking-tight font-serif">
+              How Your Loyalty Works
             </h2>
             <p className="text-xs sm:text-sm text-stone-500">
-              No cards to carry, no apps required at checkout. Just four seamless steps.
+              No plastic cards to carry, no complicated app installations. Just your mobile number at checkout.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+          {/* 4 Connected Steps */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Step 1 */}
-            <div className="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm hover:shadow-md transition-all space-y-4 relative group">
+            <div className="bg-white rounded-3xl p-6 border border-stone-200/90 shadow-xs hover:shadow-md transition-all space-y-4 relative group">
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-black text-stone-200 group-hover:text-[#159028] transition-colors font-serif">
+                <span className="text-4xl font-black text-stone-200 group-hover:text-[#159028] transition-colors font-serif">
                   01
                 </span>
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#159028] flex items-center justify-center">
-                  <ShoppingBag className="w-5 h-5" />
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#159028] flex items-center justify-center font-bold">
+                  <ShoppingBag className="w-6 h-6" />
                 </div>
               </div>
               <div>
-                <h3 className="text-base font-bold text-stone-900">Shop In Store</h3>
+                <h3 className="text-base font-bold text-stone-900 uppercase tracking-wide">
+                  Shop In Store
+                </h3>
                 <p className="text-xs text-stone-500 mt-2 leading-relaxed">
                   Visit any of our 120+ retail fashion stores nationwide. Try on your favorite garments from Men, Women, Kids, or Accessories.
                 </p>
@@ -220,257 +663,401 @@ export default function LandingPage() {
             </div>
 
             {/* Step 2 */}
-            <div className="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm hover:shadow-md transition-all space-y-4 relative group">
+            <div className="bg-white rounded-3xl p-6 border border-stone-200/90 shadow-xs hover:shadow-md transition-all space-y-4 relative group">
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-black text-stone-200 group-hover:text-[#159028] transition-colors font-serif">
+                <span className="text-4xl font-black text-stone-200 group-hover:text-[#159028] transition-colors font-serif">
                   02
                 </span>
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#159028] flex items-center justify-center">
-                  <Phone className="w-5 h-5" />
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#159028] flex items-center justify-center font-bold">
+                  <Phone className="w-6 h-6" />
                 </div>
               </div>
               <div>
-                <h3 className="text-base font-bold text-stone-900">Share Mobile Number</h3>
+                <h3 className="text-base font-bold text-stone-900 uppercase tracking-wide">
+                  Share Your Mobile Number
+                </h3>
                 <p className="text-xs text-stone-500 mt-2 leading-relaxed">
-                  At the billing counter, simply speak your 10-digit mobile number to our store staff. No OTP or login password needed.
+                  At the billing counter, simply speak your 10-digit mobile number to our store cashier. No password, no OTP delays.
                 </p>
               </div>
             </div>
 
             {/* Step 3 */}
-            <div className="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm hover:shadow-md transition-all space-y-4 relative group">
+            <div className="bg-white rounded-3xl p-6 border border-stone-200/90 shadow-xs hover:shadow-md transition-all space-y-4 relative group">
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-black text-stone-200 group-hover:text-[#159028] transition-colors font-serif">
+                <span className="text-4xl font-black text-stone-200 group-hover:text-[#159028] transition-colors font-serif">
                   03
                 </span>
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#159028] flex items-center justify-center">
-                  <Sparkles className="w-5 h-5" />
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#159028] flex items-center justify-center font-bold">
+                  <Sparkles className="w-6 h-6" />
                 </div>
               </div>
               <div>
-                <h3 className="text-base font-bold text-stone-900">Earn Points Automatically</h3>
+                <h3 className="text-base font-bold text-stone-900 uppercase tracking-wide">
+                  Earn Points
+                </h3>
                 <p className="text-xs text-stone-500 mt-2 leading-relaxed">
-                  Points calculate instantly at ₹{state.pointsRule.amountPerPoint} = 1 point. A ₹5,000 purchase awards +20 loyalty points right to your account.
+                  Points calculate instantly at ₹250 spent = 1 point. A ₹5,000 store bill immediately adds +20 points to your account.
                 </p>
               </div>
             </div>
 
             {/* Step 4 */}
-            <div className="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm hover:shadow-md transition-all space-y-4 relative group">
+            <div className="bg-white rounded-3xl p-6 border border-stone-200/90 shadow-xs hover:shadow-md transition-all space-y-4 relative group">
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-black text-stone-200 group-hover:text-[#159028] transition-colors font-serif">
+                <span className="text-4xl font-black text-stone-200 group-hover:text-[#159028] transition-colors font-serif">
                   04
                 </span>
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#159028] flex items-center justify-center">
-                  <Gift className="w-5 h-5" />
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#159028] flex items-center justify-center font-bold">
+                  <Gift className="w-6 h-6" />
                 </div>
               </div>
               <div>
-                <h3 className="text-base font-bold text-stone-900">Unlock Exclusive Rewards</h3>
+                <h3 className="text-base font-bold text-stone-900 uppercase tracking-wide">
+                  Unlock Rewards
+                </h3>
                 <p className="text-xs text-stone-500 mt-2 leading-relaxed">
-                  Redeem accumulated points for shopping vouchers (₹100, ₹500), 10% discounts, birthday specials, and elevated membership tiers.
+                  Redeem your accumulated points for shopping vouchers (₹100, ₹250, ₹500), 10% discounts, and higher VIP membership tiers.
                 </p>
               </div>
             </div>
           </div>
-        </section>
 
-        {/* ============================================================ */}
-        {/* FEATURED IN-STORE CLOTHING (STORE CATALOGUE PREVIEW) */}
-        {/* ============================================================ */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-[#159028]">
-                IN-STORE COLLECTION
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-black text-stone-900 tracking-tight font-serif mt-1">
-                Featured Clothing On Racks
-              </h2>
-              <p className="text-xs text-stone-500 mt-1">
-                Preview our latest garments available in store. Browse only — try on & purchase at your local Westside.
-              </p>
-            </div>
+          {/* Practical Purchase to Points Calculation Card (Demonstrates the Solution) */}
+          <div className="bg-[#0D0D0D] text-white rounded-3xl p-8 sm:p-12 shadow-2xl border border-stone-800">
+            <div className="max-w-4xl mx-auto space-y-8">
+              <div className="text-center space-y-2">
+                <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+                  REAL-WORLD BILLING SCENARIO
+                </span>
+                <h3 className="text-2xl sm:text-3xl font-black font-serif">
+                  See How Fast Your Store Bill Turns Into Rewards
+                </h3>
+                <p className="text-xs sm:text-sm text-stone-400">
+                  Here is how a routine weekend shopping trip at Westside translates into instant savings.
+                </p>
+              </div>
 
-            <Link href="/catalog">
-              <Button variant="outline" className="border-stone-300 text-xs gap-1.5">
-                View Full 20+ Catalogue
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Button>
-            </Link>
-          </div>
+              {/* Step By Step Pipeline Box */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
+                {/* 1. Purchase */}
+                <div className="p-5 rounded-2xl bg-stone-900 border border-stone-800 text-center space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-stone-400">STORE PURCHASE</span>
+                  <div className="text-2xl font-black text-white font-serif">₹5,000</div>
+                  <span className="text-[11px] text-stone-400 block">Weekend Clothes</span>
+                </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {state.products.slice(0, 4).map(product => {
-              const points = calculatePoints(product.price);
-              return (
-                <div
-                  key={product.id}
-                  className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm hover:shadow-lg transition-all group flex flex-col justify-between"
-                >
+                {/* Arrow */}
+                <div className="hidden lg:flex justify-center text-emerald-400 font-bold text-xl">
+                  →
+                </div>
+
+                {/* 2. Calculation */}
+                <div className="p-5 rounded-2xl bg-stone-900 border border-stone-800 text-center space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-emerald-400">LOYALTY FORMULA</span>
+                  <div className="text-xl font-bold text-white font-mono">₹250 = 1 PT</div>
+                  <span className="text-[11px] text-stone-400 block">Automatic Math</span>
+                </div>
+
+                {/* Arrow */}
+                <div className="hidden lg:flex justify-center text-emerald-400 font-bold text-xl">
+                  →
+                </div>
+
+                {/* 3. Points Earned */}
+                <div className="p-5 rounded-2xl bg-emerald-950/70 border border-emerald-700/80 text-center space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-emerald-300">POINTS EARNED</span>
+                  <div className="text-2xl font-black text-[#159028] font-mono">+20 POINTS</div>
+                  <span className="text-[11px] text-emerald-200 block">Credited Instantly</span>
+                </div>
+              </div>
+
+              {/* Bottom Result Strip */}
+              <div className="p-6 rounded-2xl bg-stone-900/90 border border-stone-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#159028] text-white flex items-center justify-center font-bold">
+                    ✓
+                  </div>
                   <div>
-                    <div className="aspect-[3/4] relative overflow-hidden bg-stone-100">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute top-3 left-3">
-                        <span className="text-[10px] font-bold uppercase bg-white/95 px-2.5 py-0.5 rounded-full text-stone-900 shadow-sm">
-                          {product.tag}
-                        </span>
-                      </div>
-                      <div className="absolute top-3 right-3">
-                        <span className="text-[10px] font-semibold bg-[#159028] text-white px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          In Store
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="p-4 space-y-1">
-                      <span className="text-[10px] uppercase font-bold text-stone-400">
-                        {product.category}
-                      </span>
-                      <h4 className="text-xs font-bold text-stone-900 line-clamp-1">
-                        {product.name}
-                      </h4>
-                      <div className="pt-1 flex items-baseline justify-between">
-                        <span className="text-sm font-bold text-stone-900 font-serif">
-                          {formatCurrency(product.price)}
-                        </span>
-                        <span className="text-[10px] font-bold text-[#159028] bg-emerald-50 px-2 py-0.5 rounded-full">
-                          Earn +{points} Pts
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 pt-0 border-t border-stone-100 mt-2">
-                    <Link href="/catalog" className="w-full block">
-                      <Button variant="outline" className="w-full text-xs h-8 text-stone-600 hover:text-stone-900">
-                        Available In Store Only
-                      </Button>
-                    </Link>
+                    <div className="text-xs text-stone-400 uppercase font-bold tracking-wider">NEW LOYALTY BALANCE</div>
+                    <div className="text-lg font-bold text-white">100 Total Points Reached</div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </section>
 
-        {/* ============================================================ */}
-        {/* MEMBERSHIP TIERS SHOWCASE */}
-        {/* ============================================================ */}
-        <section className="bg-stone-900 text-white py-16 sm:py-20 rounded-3xl mx-4 sm:mx-6 lg:mx-8 px-6 sm:px-12">
-          <div className="max-w-7xl mx-auto space-y-12">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-                EXCLUSIVE PRIVILEGES
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight font-serif">
-                Four Tiers of Fashion Distinction
-              </h2>
-              <p className="text-xs sm:text-sm text-stone-400">
-                Unlock elevated point multipliers, birthday treats, and VIP access as you shop.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {TIER_CONFIG.map(tier => (
-                <div
-                  key={tier.name}
-                  className="bg-stone-800/90 border border-stone-700 rounded-2xl p-6 flex flex-col justify-between hover:border-emerald-500/50 transition-colors"
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-3xl">{tier.icon}</span>
-                      <span className="text-xs font-mono text-emerald-400 font-bold bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-800">
-                        {tier.rewardMultiplier}x Multiplier
-                      </span>
-                    </div>
-
-                    <div>
-                      <h3 className="text-lg font-bold text-white font-serif">{tier.name}</h3>
-                      <div className="text-xs text-stone-400 mt-0.5">
-                        {tier.maxPoints === Infinity
-                          ? `${tier.minPoints.toLocaleString('en-IN')}+ pts`
-                          : `${tier.minPoints.toLocaleString('en-IN')} – ${tier.maxPoints.toLocaleString('en-IN')} pts`}
-                      </div>
-                    </div>
-
-                    <ul className="space-y-2 text-xs text-stone-300 pt-2 border-t border-stone-700">
-                      {tier.benefits.map((benefit, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="text-emerald-400">✓</span>
-                          <span>{benefit}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="pt-6">
-                    <Link href="/customer/membership" className="w-full block">
-                      <Button variant="outline" className="w-full text-xs text-stone-200 border-stone-700 hover:bg-stone-700">
-                        Learn More
-                      </Button>
-                    </Link>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="green" className="text-xs px-3 py-1 font-bold">
+                    🎉 ₹100 Reward Unlocked!
+                  </Badge>
+                  <Link href="/customer/rewards">
+                    <Button size="sm" className="bg-white text-stone-900 hover:bg-stone-100 font-bold text-xs h-9 rounded-xl">
+                      Claim In-Store Voucher
+                    </Button>
+                  </Link>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </section>
 
         {/* ============================================================ */}
-        {/* REWARDS CATALOGUE PREVIEW */}
+        {/* 5. MEMBERSHIP SYSTEM (4 FASHION MEMBERSHIP CARDS) */}
+        {/* ============================================================ */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#159028]">
+              PROGRESSIVE PRIVILEGES
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#0D0D0D] tracking-tight font-serif">
+              Four Tiers of Fashion Distinction
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-500">
+              The more you visit our retail stores, the higher your rewards multiplier and VIP store privileges climb.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {membershipTiers.map(tier => (
+              <div
+                key={tier.name}
+                className={`rounded-3xl border p-6 flex flex-col justify-between space-y-6 ${tier.color}`}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black uppercase tracking-widest font-mono">
+                      {tier.name}
+                    </span>
+                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${tier.badge}`}>
+                      {tier.multiplier}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-2xl font-black font-serif tracking-tight">{tier.range}</h3>
+                    <div className="text-xs font-bold text-emerald-600 mt-0.5">
+                      Key Benefit: {tier.benefit}
+                    </div>
+                  </div>
+
+                  <ul className="space-y-2.5 text-xs pt-2 border-t border-stone-200/40">
+                    {tier.perks.map((perk, i) => (
+                      <li key={i} className="flex items-start gap-2 text-stone-600">
+                        <Check className="w-3.5 h-3.5 text-[#159028] shrink-0 mt-0.5" />
+                        <span>{perk}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="pt-4 border-t border-stone-200/40">
+                  <div className="text-[11px] font-bold text-stone-400 mb-2">{tier.progress}</div>
+                  <Link href="/customer/membership" className="w-full block">
+                    <Button variant="outline" className="w-full text-xs font-bold h-9 rounded-xl border-stone-300">
+                      Tier Details →
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* 6. CUSTOMER DASHBOARD PREVIEW: "HI, RAHUL" */}
         {/* ============================================================ */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+          <div className="bg-white rounded-3xl border border-stone-200/90 p-8 sm:p-12 shadow-sm space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-stone-100 pb-6">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-widest text-[#159028]">
+                  CUSTOMER PORTAL PREVIEW
+                </span>
+                <h3 className="text-2xl sm:text-3xl font-black text-stone-900 font-serif mt-1">
+                  Hi, Rahul 👋
+                </h3>
+                <p className="text-xs text-stone-500">
+                  Profile: Rahul Kumar • Mobile: +91 98XXXXXX21 • Status: Silver Member
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Link href="/customer">
+                  <Button className="bg-[#159028] hover:bg-emerald-700 text-white font-bold text-xs h-10 px-5 rounded-xl shadow-xs">
+                    Open Full Dashboard →
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Dashboard Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              {/* Left: Total Points & Progress */}
+              <div className="lg:col-span-5 space-y-4">
+                <div className="p-6 rounded-2xl bg-[#F8F7F4] border border-stone-200/90 space-y-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-stone-500">
+                    TOTAL ACCUMULATED POINTS
+                  </span>
+                  <div className="text-4xl sm:text-5xl font-black text-stone-900 font-mono tracking-tight">
+                    3,600 <span className="text-sm font-sans font-semibold text-stone-500">PTS</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-[#159028] font-bold">
+                    <Sparkles className="w-4 h-4" />
+                    <span>Eligible for ₹100, ₹250, and 10% Vouchers</span>
+                  </div>
+                </div>
+
+                {/* Tier Progress Bar */}
+                <div className="p-5 rounded-2xl bg-white border border-stone-200/90 space-y-2">
+                  <div className="flex justify-between text-xs font-bold text-stone-800">
+                    <span>SILVER → GOLD</span>
+                    <span className="text-[#159028]">3,600 / 5,000 Pts</span>
+                  </div>
+                  <div className="w-full h-2.5 rounded-full bg-stone-100 overflow-hidden">
+                    <div className="h-full bg-[#159028] rounded-full" style={{ width: '72%' }}></div>
+                  </div>
+                  <div className="text-[11px] text-stone-500 flex justify-between">
+                    <span>1,400 points to Gold</span>
+                    <span className="font-semibold text-stone-700">Gold unlocks free alterations</span>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+                  <Link href="/customer/rewards" className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 text-center hover:bg-stone-100 transition-colors">
+                    <Gift className="w-4 h-4 mx-auto text-[#159028] mb-1" />
+                    <span className="text-[10px] font-bold text-stone-800 block">Rewards</span>
+                  </Link>
+                  <Link href="/customer/transactions" className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 text-center hover:bg-stone-100 transition-colors">
+                    <Clock className="w-4 h-4 mx-auto text-[#159028] mb-1" />
+                    <span className="text-[10px] font-bold text-stone-800 block">History</span>
+                  </Link>
+                  <Link href="/customer/membership" className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 text-center hover:bg-stone-100 transition-colors">
+                    <Crown className="w-4 h-4 mx-auto text-[#159028] mb-1" />
+                    <span className="text-[10px] font-bold text-stone-800 block">Tiers</span>
+                  </Link>
+                  <Link href="/customer/profile" className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 text-center hover:bg-stone-100 transition-colors">
+                    <User className="w-4 h-4 mx-auto text-[#159028] mb-1" />
+                    <span className="text-[10px] font-bold text-stone-800 block">Profile</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right: Recent In-Store Transaction Log */}
+              <div className="lg:col-span-7 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-stone-900">
+                    Recent Store Transactions
+                  </h4>
+                  <Link href="/customer/transactions" className="text-xs text-[#159028] font-bold hover:underline">
+                    View Statement →
+                  </Link>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="p-4 rounded-2xl bg-white border border-stone-200/90 flex items-center justify-between shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#159028] flex items-center justify-center font-bold">
+                        <ArrowDownLeft className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-xs text-stone-900">Westside Store — Phoenix Palladium</div>
+                        <div className="text-[11px] text-stone-400">26 Sep 2026 • Bill Amount: ₹5,000</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-black text-[#159028]">+20 Points</div>
+                      <span className="text-[10px] text-stone-400">Earned</span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-white border border-stone-200/90 flex items-center justify-between shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#159028] flex items-center justify-center font-bold">
+                        <ArrowDownLeft className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-xs text-stone-900">Westside Store — Phoenix Palladium</div>
+                        <div className="text-[11px] text-stone-400">20 Sep 2026 • Bill Amount: ₹2,500</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-black text-[#159028]">+10 Points</div>
+                      <span className="text-[10px] text-stone-400">Earned</span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-white border border-stone-200/90 flex items-center justify-between shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
+                        <ArrowUpRight className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-xs text-stone-900">In-Store Reward Redeemed</div>
+                        <div className="text-[11px] text-stone-400">15 Sep 2026 • ₹100 Shopping Reward</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-black text-stone-900">-100 Points</div>
+                      <span className="text-[10px] text-purple-700 font-semibold">Redeemed</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* 7. REWARDS SECTION: "REWARDS WORTH SHOPPING FOR" */}
+        {/* ============================================================ */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
               <span className="text-xs font-bold uppercase tracking-widest text-[#159028]">
-                STORE REWARDS
+                INSTANT STORE PERKS
               </span>
-              <h2 className="text-3xl sm:text-4xl font-black text-stone-900 tracking-tight font-serif mt-1">
-                Curated Store Vouchers
+              <h2 className="text-3xl sm:text-4xl font-black text-[#0D0D0D] tracking-tight font-serif mt-1">
+                Rewards Worth Shopping For
               </h2>
-              <p className="text-xs text-stone-500 mt-1">
-                Redeem your points for immediate billing discounts and exclusive experiences.
+              <p className="text-xs sm:text-sm text-stone-500 mt-1 max-w-xl">
+                Convert your accumulated points into immediate billing discounts and VIP styling treats.
               </p>
             </div>
 
             <Link href="/customer/rewards">
-              <Button variant="outline" className="border-stone-300 text-xs gap-1.5">
-                All 15 Rewards
+              <Button variant="outline" className="border-stone-300 bg-white text-xs font-bold uppercase tracking-wider h-11 px-5 rounded-xl hover:bg-stone-50 gap-1.5">
+                Explore All 15 Rewards
                 <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {state.rewards.slice(0, 3).map(reward => (
-              <Card key={reward.id} className="border-stone-200 shadow-sm hover:shadow-md transition-shadow">
+            {curatedRewards.map(reward => (
+              <Card key={reward.title} className="border-stone-200/90 shadow-xs hover:shadow-md transition-all duration-300 bg-white rounded-3xl group">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-start justify-between">
-                    <div className="w-12 h-12 rounded-2xl bg-stone-50 border border-stone-200 flex items-center justify-center text-2xl">
+                    <div className="w-12 h-12 rounded-2xl bg-stone-50 border border-stone-200/80 flex items-center justify-center text-2xl group-hover:scale-108 transition-transform">
                       {reward.icon}
                     </div>
-                    <Badge variant="green" className="text-[10px]">
-                      {reward.pointsRequired} Points
+                    <Badge variant="green" className="text-[10px] font-bold">
+                      {reward.points} Points
                     </Badge>
                   </div>
 
                   <div>
-                    <h3 className="text-base font-bold text-stone-900">{reward.name}</h3>
+                    <div className="text-[10px] uppercase font-bold tracking-wider text-stone-400">
+                      {reward.category}
+                    </div>
+                    <h3 className="text-base font-bold text-stone-900 mt-0.5">{reward.title}</h3>
                     <p className="text-xs text-stone-500 mt-1 leading-relaxed">
-                      {reward.description}
+                      {reward.desc}
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
-                    <span className="text-xs font-bold text-stone-700">{reward.rewardValue}</span>
+                  <div className="pt-3 border-t border-stone-100 flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#159028]">{reward.value}</span>
                     <Link href="/customer/rewards">
-                      <Button size="sm" className="h-8 text-xs bg-[#159028] hover:bg-emerald-700 text-white">
+                      <Button size="sm" className="h-8 text-xs font-bold bg-[#0D0D0D] hover:bg-stone-800 text-white rounded-xl px-4">
                         Redeem
                       </Button>
                     </Link>
@@ -482,108 +1069,213 @@ export default function LandingPage() {
         </section>
 
         {/* ============================================================ */}
-        {/* WHY JOIN SECTION */}
+        {/* 8. STAFF / BILLING POS EXPERIENCE PREVIEW */}
         {/* ============================================================ */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-3xl border border-stone-200 p-8 sm:p-12 shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="space-y-2">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#159028] flex items-center justify-center font-bold">
-                  <ShieldCheck className="w-5 h-5" />
+          <div className="bg-gradient-to-r from-stone-900 via-[#0D0D0D] to-stone-900 text-white rounded-3xl p-8 sm:p-12 shadow-xl border border-stone-800">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              <div className="lg:col-span-6 space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px] font-bold uppercase tracking-wider">
+                  <Store className="w-3.5 h-3.5" />
+                  Staff In-Store POS Experience
                 </div>
-                <h3 className="text-base font-bold text-stone-900">Zero Password Friction</h3>
-                <p className="text-xs text-stone-500 leading-relaxed">
-                  Never forget a password or get stuck waiting for SMS OTPs in store queues. Your unique mobile number is your key.
+
+                <h3 className="text-3xl sm:text-4xl font-black font-serif tracking-tight">
+                  Seamless Checkout for Cashier Teams
+                </h3>
+
+                <p className="text-xs sm:text-sm text-stone-400 leading-relaxed max-w-md">
+                  Cashiers look up customers using only a 10-digit mobile number. Enter the physical billing amount, and points are computed and credited in less than 5 seconds.
                 </p>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <Link href="/admin/purchases">
+                    <Button size="lg" className="bg-[#159028] hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider px-6 h-11 rounded-xl shadow-md gap-2">
+                      Launch Staff POS Terminal
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                  <Link href="/admin">
+                    <Button size="lg" variant="outline" className="border-stone-700 text-stone-300 hover:text-white hover:bg-stone-800 text-xs font-bold uppercase tracking-wider h-11 px-5 rounded-xl">
+                      Admin Portal
+                    </Button>
+                  </Link>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#159028] flex items-center justify-center font-bold">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <h3 className="text-base font-bold text-stone-900">Instant Points Accrual</h3>
-                <p className="text-xs text-stone-500 leading-relaxed">
-                  Every ₹{state.pointsRule.amountPerPoint} spent awards 1 loyalty point calculated automatically by our store POS terminal.
-                </p>
-              </div>
+              {/* In-Store POS Simulated Card */}
+              <div className="lg:col-span-6">
+                <div className="bg-white text-stone-900 rounded-3xl p-6 sm:p-7 shadow-2xl border border-stone-200/90 space-y-4">
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#159028]"></span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-stone-900">
+                        ADD STORE PURCHASE
+                      </span>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] border-stone-300">
+                      Terminal #04 · Mumbai
+                    </Badge>
+                  </div>
 
-              <div className="space-y-2">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#159028] flex items-center justify-center font-bold">
-                  <Crown className="w-5 h-5" />
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 bg-stone-50 rounded-xl border border-stone-100">
+                      <span className="text-[10px] uppercase font-bold text-stone-400 block">Mobile Number</span>
+                      <span className="font-mono font-bold text-stone-900 text-sm">98765 43210</span>
+                    </div>
+                    <div className="p-3 bg-stone-50 rounded-xl border border-stone-100">
+                      <span className="text-[10px] uppercase font-bold text-stone-400 block">Customer</span>
+                      <span className="font-bold text-stone-900 text-sm">Rahul Kumar</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3 text-xs">
+                    <div className="p-3 bg-stone-50 rounded-xl border border-stone-100">
+                      <span className="text-[10px] text-stone-400 block font-semibold">Current Points</span>
+                      <span className="font-bold text-stone-700 text-sm">80 Pts</span>
+                    </div>
+                    <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                      <span className="text-[10px] text-emerald-800 block font-semibold">Bill Amount</span>
+                      <span className="font-bold text-stone-900 text-sm">₹5,000</span>
+                    </div>
+                    <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                      <span className="text-[10px] text-emerald-800 block font-semibold">Points Earned</span>
+                      <span className="font-black text-[#159028] text-sm">+20 Pts</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-stone-900 text-white text-xs flex items-center justify-between">
+                    <span>New Balance: <strong>100 Points</strong></span>
+                    <span className="text-emerald-400 font-bold text-[11px]">🎉 ₹100 Reward Unlocked!</span>
+                  </div>
+
+                  <Link href="/admin/purchases" className="w-full block">
+                    <Button className="w-full bg-[#159028] hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider h-11 rounded-xl shadow-xs">
+                      Add Purchase & Award Points
+                    </Button>
+                  </Link>
                 </div>
-                <h3 className="text-base font-bold text-stone-900">True Fashion Rewards</h3>
-                <p className="text-xs text-stone-500 leading-relaxed">
-                  From ₹100 and ₹500 shopping credits to free alterations, styling sessions, and VIP sale access.
-                </p>
               </div>
             </div>
           </div>
         </section>
 
         {/* ============================================================ */}
-        {/* FREQUENTLY ASKED QUESTIONS */}
-        {/* ============================================================ */}
-        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="text-center space-y-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#159028]">
-              CLARIFICATIONS
-            </span>
-            <h2 className="text-3xl font-black text-stone-900 tracking-tight font-serif">
-              Frequently Asked Questions
-            </h2>
-            <p className="text-xs text-stone-500">
-              Everything you need to know about our retail physical-store loyalty management system.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {faqs.map((faq, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-stone-200 p-6 space-y-2 shadow-sm">
-                <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
-                  <HelpCircle className="w-4 h-4 text-[#159028] shrink-0" />
-                  {faq.q}
-                </h3>
-                <p className="text-xs text-stone-600 leading-relaxed pl-6">
-                  {faq.a}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ============================================================ */}
-        {/* BOTTOM CTA STRIP */}
+        {/* 9. FINAL BRAND CTA */}
         {/* ============================================================ */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-3xl bg-gradient-to-r from-[#0D0D0D] via-stone-900 to-[#0D0D0D] text-white p-8 sm:p-12 text-center space-y-6 shadow-2xl relative overflow-hidden border border-stone-800">
-            <div className="max-w-xl mx-auto space-y-3">
-              <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+          <div className="rounded-3xl bg-[#0D0D0D] text-white p-8 sm:p-16 text-center space-y-6 shadow-2xl relative overflow-hidden border border-stone-800">
+            <div className="max-w-2xl mx-auto space-y-3">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#159028]">
                 START EARNING TODAY
               </span>
-              <h2 className="text-3xl sm:text-4xl font-black tracking-tight font-serif">
-                Join 25,000+ Westside Shoppers
+              <h2 className="text-4xl sm:text-5xl font-black tracking-tight font-serif">
+                Every Purchase Takes You Further.
               </h2>
-              <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
-                Enroll your profile now in 10 seconds. Enjoy 50 welcome bonus points and step into a world of retail style privileges.
+              <p className="text-sm sm:text-base text-stone-400 leading-relaxed font-normal">
+                Shop more. Earn more. Unlock more. Create your free loyalty profile in 10 seconds and enjoy privileges across all Westside stores nationwide.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
               <Link href="/join">
-                <Button size="lg" className="bg-[#159028] hover:bg-emerald-700 text-white font-bold text-sm px-8 h-12 rounded-xl shadow-lg gap-2">
+                <Button size="lg" className="bg-[#159028] hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider px-8 h-12 rounded-xl shadow-lg gap-2">
                   <Sparkles className="w-4 h-4" />
-                  Create Free Profile
+                  Join Westside Loyalty
                 </Button>
               </Link>
-              <Link href="/admin/purchases">
-                <Button size="lg" variant="outline" className="border-stone-700 text-stone-300 hover:text-white hover:bg-stone-800 text-sm h-12 rounded-xl">
-                  Store Staff Billing POS →
+              <Link href="/catalog">
+                <Button size="lg" variant="outline" className="border-stone-700 text-stone-300 hover:text-white hover:bg-stone-800 text-xs font-bold uppercase tracking-wider h-12 px-7 rounded-xl">
+                  Explore In-Store Lookbook
                 </Button>
               </Link>
             </div>
           </div>
         </section>
       </main>
+
+      {/* ============================================================ */}
+      {/* QUICK VIEW GARMENT MODAL (NO CART / IN-STORE ONLY) */}
+      {/* ============================================================ */}
+      {selectedProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border border-stone-200 relative animate-in zoom-in-95 duration-200">
+            <button
+              type="button"
+              onClick={() => setSelectedProduct(null)}
+              className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm border border-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center shadow-md transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              <div className="aspect-[3/4] relative bg-stone-100">
+                <img
+                  src={selectedProduct.image}
+                  alt={selectedProduct.name}
+                  className="w-full h-full object-cover object-top"
+                />
+                <div className="absolute top-3 left-3">
+                  <Badge variant="outline" className="bg-white/95 text-[10px] font-bold">
+                    {selectedProduct.category}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="p-6 sm:p-8 flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#159028]">
+                      {selectedProduct.tag}
+                    </span>
+                    <h3 className="text-2xl font-black text-stone-900 font-serif mt-1">
+                      {selectedProduct.name}
+                    </h3>
+                  </div>
+
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-2xl font-black text-stone-900 font-serif">
+                      {formatCurrency(selectedProduct.price)}
+                    </span>
+                    <span className="text-xs font-bold text-[#159028] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 font-mono">
+                      Earns +{calculatePoints(selectedProduct.price)} Points
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-stone-600 leading-relaxed">
+                    {selectedProduct.description}
+                  </p>
+
+                  <div className="p-3.5 bg-stone-50 rounded-2xl border border-stone-100 text-xs space-y-1">
+                    <div className="font-bold text-stone-800 flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#159028]" />
+                      Trial & Fitting In Store
+                    </div>
+                    <p className="text-[11px] text-stone-500">
+                      Available across all metro Westside flagships. Visit store fitting rooms for personalized trial.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-stone-100">
+                  <div className="flex items-center justify-between text-xs text-stone-500">
+                    <span>Store Loyalty Rate:</span>
+                    <span className="font-bold text-stone-900">₹{state.pointsRule.amountPerPoint} = 1 Point</span>
+                  </div>
+                  <Link href="/catalog" className="w-full block">
+                    <Button
+                      onClick={() => setSelectedProduct(null)}
+                      className="w-full bg-[#159028] hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider h-11 rounded-xl"
+                    >
+                      Browse Full In-Store Lookbook
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

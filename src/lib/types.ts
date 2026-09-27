@@ -64,7 +64,7 @@ export interface Reward {
 export interface Product {
   id: string;
   name: string;
-  category: 'Men' | 'Women' | 'Kids' | 'Accessories';
+  category: 'Men' | 'Women' | 'Kids' | 'Footwear' | 'Accessories';
   price: number;
   tag: string;
   description: string;

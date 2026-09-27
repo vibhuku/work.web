@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   Receipt
 } from 'lucide-react';
+import { ProductCard3D } from '@/components/3d/ProductCard3D';
 
 const CATEGORIES = ['All', 'Men', 'Women', 'Kids', 'Accessories'] as const;
 
@@ -116,94 +117,17 @@ export default function CatalogPage() {
           </span>
         </div>
 
-        {/* Product Cards Grid */}
+        {/* Product Cards Grid with 3D Tilt & Quick View */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {filteredProducts.map(product => {
             const pointsWillEarn = calculatePoints(product.price);
-
             return (
-              <div
+              <ProductCard3D
                 key={product.id}
-                className="bg-white rounded-2xl border border-stone-200/80 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden group"
-              >
-                <div>
-                  {/* Product Image Box */}
-                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-stone-100">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                    />
-
-                    {/* Badge Overlay */}
-                    <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-                      <span className="text-[10px] font-bold tracking-wider uppercase bg-white/95 backdrop-blur-sm text-stone-900 px-2.5 py-1 rounded-full shadow-sm">
-                        {product.tag}
-                      </span>
-                    </div>
-
-                    <div className="absolute top-3 right-3">
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-[#159028] text-white px-2.5 py-1 rounded-full shadow-md">
-                        <MapPin className="w-3 h-3" />
-                        In Store
-                      </span>
-                    </div>
-
-                    {/* Quick View Button on Hover */}
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
-                      <Button
-                        type="button"
-                        onClick={() => setSelectedProduct(product)}
-                        className="bg-white text-stone-900 hover:bg-stone-100 text-xs font-bold shadow-lg gap-1.5"
-                      >
-                        <Eye className="w-4 h-4 text-[#159028]" />
-                        Quick View Garment
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Product Details */}
-                  <div className="p-5 space-y-2">
-                    <div className="text-[10px] uppercase font-bold tracking-widest text-stone-400">
-                      {product.category}
-                    </div>
-
-                    <h3 className="text-sm font-bold text-stone-900 group-hover:text-[#159028] transition-colors line-clamp-1">
-                      {product.name}
-                    </h3>
-
-                    <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
-                      {product.description}
-                    </p>
-
-                    <div className="pt-2 flex items-baseline justify-between">
-                      <span className="text-base font-black text-stone-900 font-serif">
-                        {formatCurrency(product.price)}
-                      </span>
-                      <span className="text-[11px] font-bold text-[#159028] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                        Earn +{pointsWillEarn} Pts
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer with Store Tag & Action */}
-                <div className="p-5 pt-0 border-t border-stone-100 mt-2 space-y-2">
-                  <div className="text-[11px] text-stone-400 flex items-center gap-1.5 pt-2">
-                    <span className="w-2 h-2 rounded-full bg-[#159028]"></span>
-                    <span>Available at 120+ Westside Stores</span>
-                  </div>
-
-                  <Button
-                    type="button"
-                    onClick={() => setSelectedProduct(product)}
-                    variant="outline"
-                    className="w-full text-xs h-9 border-stone-200 hover:bg-stone-50"
-                  >
-                    View Store Availability
-                  </Button>
-                </div>
-              </div>
+                product={product}
+                pointsEarned={pointsWillEarn}
+                onQuickView={prod => setSelectedProduct(prod)}
+              />
             );
           })}
         </div>

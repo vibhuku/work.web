@@ -30,13 +30,17 @@
     "@radix-ui/react-tabs": "^1.1.21",
     "@radix-ui/react-tooltip": "^1.2.16",
     "@tailwindcss/postcss": "^4.3.3",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^26.6.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
     "autoprefixer": "^10.6.1",
+    "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^13.4.4",
+    "gsap": "^3.15.0",
     "lucide-react": "^1.48.0",
     "next": "^16.3.6",
     "postcss": "^8.5.28",
@@ -47,6 +51,7 @@
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3",
     "tailwindcss-animate": "^1.0.7",
+    "three": "^0.186.1",
     "typescript": "^7.0.2"
   }
 }

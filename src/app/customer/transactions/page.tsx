@@ -20,10 +20,7 @@ import {
   ArrowUpRight,
   Clock,
   Sparkles,
-  Download,
-  Calendar,
-  LayoutList,
-  Columns
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -36,7 +33,6 @@ export default function CustomerTransactionsPage() {
 
   const [activeFilter, setActiveFilter] = useState<'All' | 'Earned' | 'Redeemed' | 'Expired'>('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'timeline' | 'table'>('timeline');
 
   if (!customer) return null;
 
@@ -185,195 +181,93 @@ export default function CustomerTransactionsPage() {
                 ))}
               </div>
 
-              {/* View Toggle & Search */}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center bg-stone-100 p-0.5 rounded-lg border border-stone-200">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('timeline')}
-                    className={`px-2.5 py-1 text-xs rounded-md font-medium flex items-center gap-1.5 transition-all ${
-                      viewMode === 'timeline'
-                        ? 'bg-white text-stone-900 font-bold shadow-sm'
-                        : 'text-stone-500 hover:text-stone-900'
-                    }`}
-                  >
-                    <Calendar className="w-3.5 h-3.5 text-[#159028]" />
-                    Timeline
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('table')}
-                    className={`px-2.5 py-1 text-xs rounded-md font-medium flex items-center gap-1.5 transition-all ${
-                      viewMode === 'table'
-                        ? 'bg-white text-stone-900 font-bold shadow-sm'
-                        : 'text-stone-500 hover:text-stone-900'
-                    }`}
-                  >
-                    <LayoutList className="w-3.5 h-3.5" />
-                    Table
-                  </button>
-                </div>
-
-                <div className="relative sm:w-56">
-                  <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <Input
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Search store, bill no..."
-                    className="pl-8 h-9 text-xs"
-                  />
-                </div>
+              {/* Search Bar */}
+              <div className="relative sm:w-64">
+                <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Input
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search store, bill no..."
+                  className="pl-8 h-9 text-xs"
+                />
               </div>
             </div>
 
-            {/* TIMELINE VIEW */}
-            {viewMode === 'timeline' && (
-              <div className="pt-4 pb-2">
-                <div className="relative border-l-2 border-emerald-200/80 ml-4 sm:ml-6 pl-6 space-y-6">
+            {/* Transactions Table */}
+            <div className="overflow-x-auto rounded-xl border border-stone-200">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-stone-50 border-b border-stone-200 text-stone-500 font-semibold uppercase tracking-wider">
+                  <tr>
+                    <th className="py-3 px-4">Date</th>
+                    <th className="py-3 px-4">Store / Description</th>
+                    <th className="py-3 px-4">Bill Number</th>
+                    <th className="py-3 px-4 text-right">Purchase Amount</th>
+                    <th className="py-3 px-4 text-right">Points</th>
+                    <th className="py-3 px-4 text-center">Type</th>
+                    <th className="py-3 px-4 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100 bg-white">
                   {filteredTransactions.map(txn => {
                     const isEarned = txn.points > 0;
                     return (
-                      <div key={txn.id} className="relative group">
-                        {/* Timeline Node Icon */}
-                        <div
-                          className={`absolute -left-[35px] top-1.5 w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-md transition-transform group-hover:scale-110 ${
-                            isEarned ? 'bg-[#159028] ring-4 ring-emerald-50' : 'bg-purple-600 ring-4 ring-purple-50'
-                          }`}
-                        >
-                          {isEarned ? '₹' : '🎁'}
-                        </div>
-
-                        {/* Event Card */}
-                        <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-sm hover:shadow-md transition-all space-y-2">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-stone-900 text-sm">{txn.description}</span>
-                              <Badge
-                                variant={isEarned ? 'green' : 'secondary'}
-                                className="text-[10px]"
-                              >
-                                {txn.type}
-                              </Badge>
-                            </div>
-                            <span className="text-stone-400 font-mono text-[11px]">
-                              {formatDate(txn.date)}
-                            </span>
-                          </div>
-
-                          <div className="flex flex-wrap items-center justify-between text-xs pt-1 border-t border-stone-100 gap-2">
-                            <div className="flex items-center gap-3 text-stone-500">
-                              <span>Store: <strong className="text-stone-700">{txn.store}</strong></span>
-                              <span>•</span>
-                              <span>Bill: <strong className="font-mono text-stone-700">{txn.billNumber}</strong></span>
-                              {txn.purchaseAmount > 0 && (
-                                <>
-                                  <span>•</span>
-                                  <span>Amount: <strong className="text-stone-900">{formatCurrency(txn.purchaseAmount)}</strong></span>
-                                </>
-                              )}
-                            </div>
-
-                            <div>
-                              <span
-                                className={`text-base font-black ${
-                                  isEarned ? 'text-[#159028]' : 'text-stone-800'
-                                }`}
-                              >
-                                {isEarned ? `+${txn.points}` : `${txn.points}`} Points
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <tr key={txn.id} className="hover:bg-stone-50/70 transition-colors">
+                        <td className="py-3.5 px-4 font-medium text-stone-800 whitespace-nowrap">
+                          {formatDate(txn.date)}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="font-bold text-stone-900">{txn.description}</div>
+                          <div className="text-[11px] text-stone-400">{txn.store}</div>
+                        </td>
+                        <td className="py-3.5 px-4 font-mono text-stone-600 whitespace-nowrap">
+                          {txn.billNumber}
+                        </td>
+                        <td className="py-3.5 px-4 text-right font-medium text-stone-900 whitespace-nowrap">
+                          {txn.purchaseAmount > 0 ? formatCurrency(txn.purchaseAmount) : '—'}
+                        </td>
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                          <span
+                            className={`font-black text-sm ${
+                              isEarned ? 'text-[#159028]' : 'text-stone-900'
+                            }`}
+                          >
+                            {isEarned ? `+${txn.points}` : `${txn.points}`}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                          <Badge
+                            variant={
+                              txn.type === 'Earned'
+                                ? 'green'
+                                : txn.type === 'Redeemed'
+                                ? 'secondary'
+                                : 'outline'
+                            }
+                            className="text-[10px]"
+                          >
+                            {txn.type}
+                          </Badge>
+                        </td>
+                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#159028]"></span>
+                            {txn.status}
+                          </span>
+                        </td>
+                      </tr>
                     );
                   })}
 
                   {filteredTransactions.length === 0 && (
-                    <div className="py-8 text-center text-xs text-stone-500 bg-stone-50 rounded-xl p-6">
-                      No transactions found matching your criteria.
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* TABLE VIEW */}
-            {viewMode === 'table' && (
-              <div className="overflow-x-auto rounded-xl border border-stone-200">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-stone-50 border-b border-stone-200 text-stone-500 font-semibold uppercase tracking-wider">
                     <tr>
-                      <th className="py-3 px-4">Date</th>
-                      <th className="py-3 px-4">Store / Description</th>
-                      <th className="py-3 px-4">Bill Number</th>
-                      <th className="py-3 px-4 text-right">Purchase Amount</th>
-                      <th className="py-3 px-4 text-right">Points</th>
-                      <th className="py-3 px-4 text-center">Type</th>
-                      <th className="py-3 px-4 text-center">Status</th>
+                      <td colSpan={7} className="py-8 text-center text-xs text-stone-500">
+                        No transactions found matching your criteria.
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-stone-100 bg-white">
-                    {filteredTransactions.map(txn => {
-                      const isEarned = txn.points > 0;
-                      return (
-                        <tr key={txn.id} className="hover:bg-stone-50/70 transition-colors">
-                          <td className="py-3.5 px-4 font-medium text-stone-800 whitespace-nowrap">
-                            {formatDate(txn.date)}
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <div className="font-bold text-stone-900">{txn.description}</div>
-                            <div className="text-[11px] text-stone-400">{txn.store}</div>
-                          </td>
-                          <td className="py-3.5 px-4 font-mono text-stone-600 whitespace-nowrap">
-                            {txn.billNumber}
-                          </td>
-                          <td className="py-3.5 px-4 text-right font-medium text-stone-900 whitespace-nowrap">
-                            {txn.purchaseAmount > 0 ? formatCurrency(txn.purchaseAmount) : '—'}
-                          </td>
-                          <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                            <span
-                              className={`font-black text-sm ${
-                                isEarned ? 'text-[#159028]' : 'text-stone-900'
-                              }`}
-                            >
-                              {isEarned ? `+${txn.points}` : `${txn.points}`}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                            <Badge
-                              variant={
-                                txn.type === 'Earned'
-                                  ? 'green'
-                                  : txn.type === 'Redeemed'
-                                  ? 'secondary'
-                                  : 'outline'
-                              }
-                              className="text-[10px]"
-                            >
-                              {txn.type}
-                            </Badge>
-                          </td>
-                          <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                            <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#159028]"></span>
-                              {txn.status}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-
-                    {filteredTransactions.length === 0 && (
-                      <tr>
-                        <td colSpan={7} className="py-8 text-center text-xs text-stone-500">
-                          No transactions found matching your criteria.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                  )}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       </main>

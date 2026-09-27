@@ -24,7 +24,6 @@ import {
   Receipt
 } from 'lucide-react';
 import { toast } from 'sonner';
-import confetti from 'canvas-confetti';
 
 export default function CustomerRewardsPage() {
   const { state, dispatch } = useApp();
@@ -78,13 +77,6 @@ export default function CustomerRewardsPage() {
       reward: selectedReward,
       code: voucherCode,
       expiresAt: expiry.toISOString().split('T')[0],
-    });
-
-    confetti({
-      particleCount: 50,
-      spread: 60,
-      origin: { y: 0.5 },
-      colors: ['#159028', '#f59e0b', '#3b82f6', '#10b981'],
     });
 
     toast.success(`🎉 ${selectedReward.name} redeemed! ${selectedReward.pointsRequired} points deducted.`);

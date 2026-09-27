@@ -28,7 +28,6 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
-import confetti from 'canvas-confetti';
 
 const WESTSIDE_STORES = [
   'Westside Phoenix Palladium, Mumbai',
@@ -170,14 +169,6 @@ export default function AdminPurchasesPage() {
 
     // Automatically set current customer for preview
     dispatch({ type: 'SET_CURRENT_CUSTOMER', payload: searchedCustomer.id });
-
-    // Confetti celebration
-    confetti({
-      particleCount: 45,
-      spread: 60,
-      origin: { y: 0.6 },
-      colors: ['#159028', '#34d399', '#fef08a', '#10b981'],
-    });
 
     // Show success receipt
     setSuccessReceipt({
